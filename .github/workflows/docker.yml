@@ -52,4 +52,5 @@ jobs:
           platforms: linux/amd64,linux/arm64/v8
           tags: |
             sasanlabs/owasp-vulnerableapp-facade:unreleased
+            sasanlabs/owasp-vulnerableapp-facade:latest
             sasanlabs/owasp-vulnerableapp-facade:${{ steps.gitversion.outputs.semver }}
