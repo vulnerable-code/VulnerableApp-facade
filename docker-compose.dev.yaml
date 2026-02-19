@@ -1,7 +1,7 @@
 version: "3.9"
 services:      
     VulnerableApp-facade:
-      image: sasanlabs/owasp-vulnerableapp-facade:unreleased
+      image: sasanlabs/owasp-vulnerableapp-facade:latest
       volumes:
        - ./templates:/etc/nginx/templates
       ports:
