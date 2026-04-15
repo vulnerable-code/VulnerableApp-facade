@@ -91,6 +91,20 @@ export default class Header extends React.Component<Props, {}> {
                     Owasp VulnerableApp
                   </RSuiteDropDown.Item>
                 </a>
+                <a href="https://github.com/SasanLabs/LLMForge">
+                  <RSuiteDropDown.Item
+                    icon={<RSuiteIcon icon="github" role={"img"} />}
+                  >
+                    LLMForge
+                  </RSuiteDropDown.Item>
+                </a>
+                <a href="https://github.com/SasanLabs/SAFE">
+                  <RSuiteDropDown.Item
+                    icon={<RSuiteIcon icon="github" role={"img"} />}
+                  >
+                    Security Awareness for Everyone
+                  </RSuiteDropDown.Item>
+                </a>
                 <a href="https://github.com/SasanLabs/owasp-zap-jwt-addon">
                   {" "}
                   <RSuiteDropDown.Item
