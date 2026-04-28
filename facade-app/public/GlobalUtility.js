@@ -71,3 +71,8 @@ function getUrlForVulnerabilityLevel() {
     details.activeVulnerabilityLevelIdentifier;
   return url;
 }
+
+function getUrlForVulnerability() {
+  let details = window.getCurrentVulnerabilityDetails();
+  return "/VulnerableApp/" + details.activeVulnerabilityIdentifier;
+}
