@@ -1,6 +1,7 @@
 import React from "react";
 import { LevelInformation } from "../interface/State";
 import { Panel as RSuitePanel } from "rsuite";
+import { ChallengeCard } from "./ChallengeCard";
 import {
   appendStaticResourcesToDocument,
   getResource,
@@ -11,7 +12,11 @@ import { HomePage } from "./HomePage";
 import AboutUs from "./AboutUs";
 import { Props } from "../interface/Props";
 
-export class Content extends React.Component<Props> {
+interface ContentState {
+  description?: string;
+}
+
+export class Content extends React.Component<Props, ContentState> {
   selectedLevel?: LevelInformation;
 
   componentDidUpdate(prevProps: Props) {
@@ -41,10 +46,6 @@ export class Content extends React.Component<Props> {
           );
         this.setState({ description: selectedVulnerability?.description });
         if (selectedVulnerability) {
-          manipulateDOM(
-            "__vuln_description__",
-            selectedVulnerability.description
-          );
           const selectedLevel = selectedVulnerability.levels.find(
             (level) => level.levelIdentifier === activeLevel
           );
@@ -75,13 +76,31 @@ export class Content extends React.Component<Props> {
   render() {
     const {
       activeVulnerability,
-      activeApplication,
-      activeLevel,
       activateHomePage,
       activateAboutUsPage,
       showHints,
+      isChallengeModeEnabled,
     } = this.props.globalState;
     const { setGlobalState } = this.props;
+
+    const challengeCards =
+      this.selectedLevel?.challengeCards ||
+      (this.selectedLevel?.challenge ? [this.selectedLevel.challenge] : []);
+
+    // THE FALLBACK LOGIC:
+    // Even if global mode is Challenge, if there's no data, it falls back to Scanner.
+    const isChallengeAvailable = challengeCards.length > 0;
+    const showChallengeMode = isChallengeModeEnabled && isChallengeAvailable;
+
+    // --- MASONRY LAYOUT LOGIC ---
+    // Left column gets evens (0, 2, 4...), Right gets odds (1, 3, 5...)
+    const leftColumnCards = challengeCards.filter(
+      (_, index) => index % 2 === 0
+    );
+    const rightColumnCards = challengeCards.filter(
+      (_, index) => index % 2 !== 0
+    );
+
     return (
       <div className="VulnerableApp-Facade-Info">
         {activateHomePage ? (
@@ -90,27 +109,31 @@ export class Content extends React.Component<Props> {
           <AboutUs></AboutUs>
         ) : (
           <div className="VulnerableApp-Facade-Content-Container">
-            {activeVulnerability ? (
+            {/* Main Content Area */}
+            {activeVulnerability && (
               <div>
-                <RSuitePanel
-                  header="Vulnerability Description"
-                  className="VulnerableApp-Facade-Content-Vulnerability-Description-Header"
-                  collapsible={true}
-                  defaultExpanded={true}
-                >
-                  <div className="VulnerableApp-Facade-Content">
+                {/* 1. Vulnerability Description (Scanner Mode Only) */}
+                {!showChallengeMode && (
+                  <RSuitePanel
+                    header="Vulnerability Description"
+                    className="VulnerableApp-Facade-Content-Vulnerability-Description-Header"
+                    collapsible={true}
+                    defaultExpanded={true}
+                  >
                     <div
-                      id="__vuln_description__"
-                      data-testid={"VULNERABILITY_CONTENT_DESCRIPTION"}
-                    />
-                  </div>
-                </RSuitePanel>
-              </div>
-            ) : (
-              <div />
-            )}
-            {activeVulnerability ? (
-              <div>
+                      className="VulnerableApp-Facade-Content"
+                      data-testid="VULNERABILITY_CONTENT_DESCRIPTION"
+                    >
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: this.state?.description || "",
+                        }}
+                      />
+                    </div>
+                  </RSuitePanel>
+                )}
+
+                {/* 2. Practice Vulnerability (Always displayed) */}
                 <RSuitePanel
                   header="Practice Vulnerability"
                   className="VulnerableApp-Facade-Content-Practice-Vulnerability-Header"
@@ -122,38 +145,89 @@ export class Content extends React.Component<Props> {
                     />
                   </div>
                 </RSuitePanel>
-                {this.selectedLevel &&
-                this.selectedLevel.hints &&
-                this.selectedLevel.hints.length > 0 ? (
-                  <RSuitePanel
-                    header="Hints"
-                    className="VulnerableApp-Facade-Content-Hint-Content"
-                    collapsible={true}
-                    defaultExpanded={false}
-                    expanded={showHints}
-                    onSelect={() =>
-                      setGlobalState({
-                        activeApplication: activeApplication,
-                        activeVulnerability: activeVulnerability,
-                        activeLevel: activeLevel,
-                        activateHomePage: false,
-                        activateAboutUsPage: false,
-                        showHints: !showHints,
-                      })
-                    }
+
+                {/* 3. Challenge Cards (Challenge Mode Only) */}
+                {showChallengeMode && (
+                  <div
+                    style={{
+                      margin: "15px",
+                      display: "flex",
+                      gap: "15px",
+                      alignItems: "flex-start",
+                    }}
                   >
-                    <ol data-testid={"VULNERABILITY_HINTS"}>
-                      {this.selectedLevel.hints.map((hint) => {
-                        return <li dangerouslySetInnerHTML={{ __html: hint.description }} />;
-                      })}
-                    </ol>
-                  </RSuitePanel>
-                ) : (
-                  <div />
+                    {/* Left Column */}
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "15px",
+                        flex: 1,
+                      }}
+                    >
+                      {leftColumnCards.map((challenge, index) => (
+                        <ChallengeCard
+                          key={`left-${index}`}
+                          challenge={challenge}
+                          challengeNumber={index * 2 + 1}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Right Column */}
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "15px",
+                        flex: 1,
+                      }}
+                    >
+                      {rightColumnCards.map((challenge, index) => (
+                        <ChallengeCard
+                          key={`right-${index}`}
+                          challenge={challenge}
+                          challengeNumber={index * 2 + 2}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 )}
+
+                {/* 4. Hints (Scanner Mode Only) */}
+                {!showChallengeMode &&
+                  this.selectedLevel &&
+                  this.selectedLevel.hints &&
+                  this.selectedLevel.hints.length > 0 && (
+                    <RSuitePanel
+                      header="Hints"
+                      className="VulnerableApp-Facade-Content-Hint-Content"
+                      collapsible={true}
+                      defaultExpanded={false}
+                      expanded={showHints}
+                      onSelect={() =>
+                        setGlobalState({
+                          ...this.props.globalState,
+                          showHints: !showHints,
+                        })
+                      }
+                      style={{ marginTop: "15px" }}
+                    >
+                      <ol data-testid={"VULNERABILITY_HINTS"}>
+                        {this.selectedLevel.hints.map((hint, index) => {
+                          return (
+                            <li
+                              key={index}
+                              dangerouslySetInnerHTML={{
+                                __html: hint.description,
+                              }}
+                            />
+                          );
+                        })}
+                      </ol>
+                    </RSuitePanel>
+                  )}
               </div>
-            ) : (
-              <div></div>
             )}
           </div>
         )}
